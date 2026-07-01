@@ -1,9 +1,14 @@
 from django.db import models
 
 # Create your models here.
+class Promotion(models.Model):
+   description = models.CharField(max_length=255)
+   discount = models.FloatField()
+
 
 class Collection(models.Model):
    title = models.CharField(max_length=255)
+   featured_product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, related_name='+')
 
 class Product(models.Model):
    # id field is not required as django will add automatically
@@ -13,7 +18,8 @@ class Product(models.Model):
    price = models.DecimalField(max_digits=6, decimal_places=2)
    inventory = models.IntegerField()
    last_update = models.DateTimeField(auto_now=True)
-   items = models.ForeignKey(Collection, on_delete=models.PROTECT)
+   collection = models.ForeignKey(Collection, on_delete=models.PROTECT)
+   promotions = models.ManyToManyField(Promotion)
 
 class Customer(models.Model):
    # Human readable name is used in dropdown menu
