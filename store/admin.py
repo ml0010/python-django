@@ -1,8 +1,12 @@
 from django.contrib import admin, messages
 from . import models
+from tags.models import TaggedItem
+
 from django.db.models import Count
 from django.utils.html import format_html, urlencode
 from django.urls import reverse
+from django.contrib.contenttypes.admin import GenericTabularInline
+
 
 class InventoryFilter(admin.SimpleListFilter):
    title = 'inventoy'
@@ -17,13 +21,19 @@ class InventoryFilter(admin.SimpleListFilter):
       if self.value() == '<10':
          return queryset.filter(inventory__lt=10)
 
+class TagInline(GenericTabularInline):
+   autocomplete_fields = ['tag']
+   model = TaggedItem
+
 @admin.register(models.Product)
 class ProductAdmin(admin.ModelAdmin):
+   inlines=[TagInline]
    autocomplete_fields = ['collection']
    prepopulated_fields = {
       'slug': ['title']
    }
    actions = ['clear_inventory']
+   search_fields = ['title']
    list_display = ['title', 'unit_price', 'inventory_status', 'collection_title']
    list_editable = ['unit_price']
    list_filter = ['collection', 'last_update', InventoryFilter]
@@ -91,8 +101,15 @@ class CustomerAdmin(admin.ModelAdmin):
          orders_count=Count('order')
       )
    
-#orders and customers
+class OrderItemInline(admin.TabularInline):
+   autocomplete_fields = ['product']
+   min_num = 1
+   max_num = 10
+   model = models.OrderItem
+   extra = 0
+
 @admin.register(models.Order)
 class OrderAdmin(admin.ModelAdmin):
    autocomplete_fields = ['customer']
+   inlines = [OrderItemInline]
    list_display = ['id', 'placed_at', 'customer']
